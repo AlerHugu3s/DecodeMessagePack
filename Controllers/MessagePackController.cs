@@ -23,7 +23,7 @@ public class MessagePackController : ControllerBase
    
 
     [HttpPost("decode")]
-    public async Task<IActionResult> DecodeMessagePack(IFormFile file,string rc4EncryptKey)
+    public async Task<IActionResult> DecodeMessagePack(IFormFile file)
     {
         try
         {
@@ -60,8 +60,6 @@ public class MessagePackController : ControllerBase
             using var memoryStream = new MemoryStream();
             await file.CopyToAsync(memoryStream);
             var messagePackData = memoryStream.ToArray();
-            
-            messagePackData = PersistentService.DecryptOptimizeBytes(messagePackData, rc4EncryptKey);
 
             // 解析MessagePack数据
             var jsonString = MessagePackSerializer.ConvertToJson(messagePackData);
@@ -89,18 +87,21 @@ public class MessagePackController : ControllerBase
     }
 
     [HttpPost("decode-from-bytes")]
-    public IActionResult DecodeFromBytes([FromBody] byte[] messagePackData,string rc4EncryptKey)
+    public async Task<IActionResult> DecodeFromBytes()
     {
         try
         {
+            // 从请求体读取原始字节数据
+            using var memoryStream = new MemoryStream();
+            await Request.Body.CopyToAsync(memoryStream);
+            var messagePackData = memoryStream.ToArray();
+
             if (messagePackData == null || messagePackData.Length == 0)
             {
                 return BadRequest("MessagePack数据不能为空");
             }
 
             _logger.LogInformation("[Info] [{time}] 开始解析MessagePack字节数据，大小: {size} bytes", DateTime.Now, messagePackData.Length);
-
-            messagePackData = PersistentService.DecryptOptimizeBytes(messagePackData, rc4EncryptKey);
             
             // 解析MessagePack数据
             var jsonString = MessagePackSerializer.ConvertToJson(messagePackData);

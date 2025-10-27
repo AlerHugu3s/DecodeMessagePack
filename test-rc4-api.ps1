@@ -34,27 +34,6 @@ try {
     }
 }
 
-# 测试decode-from-string端点
-Write-Host "`n3. 测试decode-from-string端点..." -ForegroundColor Yellow
-try {
-    # 创建测试字符串数据
-    $testString = "test messagepack string data"
-    
-    $uri = "$baseUrl/api/messagepack/decode-from-string"
-    Write-Host "请求URL: $uri" -ForegroundColor Cyan
-    Write-Host "测试字符串: $testString" -ForegroundColor Cyan
-    
-    $response = Invoke-RestMethod -Uri $uri -Method POST -Body $testString -ContentType "application/json"
-    Write-Host "✅ decode-from-string测试成功" -ForegroundColor Green
-    $response | ConvertTo-Json -Depth 3
-} catch {
-    Write-Host "❌ decode-from-string测试失败: $($_.Exception.Message)" -ForegroundColor Red
-    if ($_.Exception.Response) {
-        $statusCode = $_.Exception.Response.StatusCode
-        Write-Host "HTTP状态码: $statusCode" -ForegroundColor Red
-    }
-}
-
 Write-Host "`n测试完成！" -ForegroundColor Green
 Write-Host "如果仍有问题，请检查：" -ForegroundColor Yellow
 Write-Host "1. 服务是否运行在正确的端口 (http://localhost:5000)" -ForegroundColor White

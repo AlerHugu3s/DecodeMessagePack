@@ -16,33 +16,36 @@
 
 - ✅ 支持通过文件上传解析MessagePack数据
 - ✅ 支持通过字节数组解析MessagePack数据
-- ✅ 支持RC4加密的MessagePack数据解密
+- ✅ 支持通过字符串解析MessagePack数据
 - ✅ 输出格式化的JSON文本
 - ✅ 提供健康检查端点
 - ✅ 支持Swagger API文档（开发环境）
 - ✅ 完整的错误处理和日志记录
 - ✅ 支持多种输入格式
 - ✅ 支持LZ4压缩的MessagePack数据
+- ✅ 支持多种MessagePack解析器
 
 ## API端点
 
 ### 1. 文件上传解析
 - **URL**: `POST /api/messagepack/decode`
 - **Content-Type**: `multipart/form-data`
-- **参数**: 
-  - `file` (MessagePack文件) - 必需
-  - `rc4EncryptKey` (RC4加密密钥) - 必需
+- **参数**: `file` (MessagePack文件) - 必需
 - **返回**: JSON格式的解析结果
 
 ### 2. 字节数组解析
 - **URL**: `POST /api/messagepack/decode-from-bytes`
 - **Content-Type**: `application/octet-stream`
-- **参数**: 
-  - MessagePack字节数组 (请求体)
-  - `rc4EncryptKey` (RC4加密密钥) - 查询参数
+- **参数**: MessagePack字节数组 (请求体)
 - **返回**: JSON格式的解析结果
 
-### 3. 健康检查
+### 3. 字符串解析
+- **URL**: `POST /api/messagepack/decode-from-string`
+- **Content-Type**: `application/json`
+- **参数**: MessagePack字符串 (请求体)
+- **返回**: JSON格式的解析结果
+
+### 4. 健康检查
 - **URL**: `GET /health`
 - **返回**: 服务状态信息
 
@@ -106,18 +109,19 @@ dotnet run --urls "http://localhost:5000"
    "applicationUrl": "http://localhost:5000"
    ```
 
-## 加密支持
+## 支持的格式
 
-### RC4加密
-服务支持RC4加密的MessagePack数据解密：
-- 所有API端点都需要提供`rc4EncryptKey`参数
-- 服务会自动使用提供的密钥解密数据
-- 支持LZ4压缩的MessagePack数据
+### MessagePack解析器
+服务支持多种MessagePack解析器：
+- **StandardResolver** - 标准解析器
+- **UnityResolver** - Unity游戏引擎解析器
+- **BuiltinResolver** - 内置解析器
+- **AttributeFormatterResolver** - 属性格式化解析器
+- **PrimitiveObjectResolver** - 原始对象解析器
 
-### 加密密钥格式
-- 密钥可以是任意字符串
-- 建议使用强密钥以确保安全性
-- 示例：`"my-secret-key-123"`
+### 压缩支持
+- **LZ4压缩** - 支持LZ4Block压缩的MessagePack数据
+- **无压缩** - 支持标准MessagePack数据
 
 ## 使用示例
 
@@ -126,16 +130,23 @@ dotnet run --urls "http://localhost:5000"
 curl -X POST "http://localhost:5000/api/messagepack/decode" \
   -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
-  -F "file=@your-messagepack-file.msgpack" \
-  -F "rc4EncryptKey=your-encryption-key"
+  -F "file=@your-messagepack-file.msgpack"
 ```
 
 ### 使用curl发送字节数据
 ```bash
-curl -X POST "http://localhost:5000/api/messagepack/decode-from-bytes?rc4EncryptKey=your-encryption-key" \
+curl -X POST "http://localhost:5000/api/messagepack/decode-from-bytes" \
   -H "accept: application/json" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @your-messagepack-file.msgpack
+```
+
+### 使用curl发送字符串数据
+```bash
+curl -X POST "http://localhost:5000/api/messagepack/decode-from-string" \
+  -H "accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d "your-messagepack-string-data"
 ```
 
 ### 使用PowerShell测试
@@ -143,18 +154,18 @@ curl -X POST "http://localhost:5000/api/messagepack/decode-from-bytes?rc4Encrypt
 # 测试健康检查
 Invoke-RestMethod -Uri "http://localhost:5000/health" -Method GET
 
-# 测试文件上传（带RC4密钥）
+# 测试文件上传
 $file = Get-Item "your-file.msgpack"
-$form = @{
-    file = $file
-    rc4EncryptKey = "your-encryption-key"
-}
+$form = @{file = $file}
 Invoke-RestMethod -Uri "http://localhost:5000/api/messagepack/decode" -Method POST -Form $form
 
-# 测试字节数组上传（带RC4密钥）
+# 测试字节数组上传
 $bytes = [System.IO.File]::ReadAllBytes("your-file.msgpack")
-$uri = "http://localhost:5000/api/messagepack/decode-from-bytes?rc4EncryptKey=your-encryption-key"
-Invoke-RestMethod -Uri $uri -Method POST -Body $bytes -ContentType "application/octet-stream"
+Invoke-RestMethod -Uri "http://localhost:5000/api/messagepack/decode-from-bytes" -Method POST -Body $bytes -ContentType "application/octet-stream"
+
+# 测试字符串上传
+$stringData = "your-messagepack-string-data"
+Invoke-RestMethod -Uri "http://localhost:5000/api/messagepack/decode-from-string" -Method POST -Body $stringData -ContentType "application/json"
 ```
 
 ### 使用浏览器测试
@@ -183,6 +194,16 @@ Invoke-RestMethod -Uri $uri -Method POST -Body $bytes -ContentType "application/
 }
 ```
 
+### 字符串解析成功时返回：
+```json
+{
+  "success": true,
+  "stringLength": 50,
+  "dataSize": 50,
+  "jsonData": "{\n  \"key\": \"value\",\n  \"number\": 123\n}"
+}
+```
+
 ### 解析失败时返回：
 ```json
 {
@@ -194,9 +215,10 @@ Invoke-RestMethod -Uri $uri -Method POST -Body $bytes -ContentType "application/
 
 ### 常见错误类型：
 - **缺少文件**: "请选择一个MessagePack文件"
-- **缺少密钥**: "RC4加密密钥不能为空"
-- **解密失败**: "RC4解密失败"
+- **数据为空**: "MessagePack数据不能为空"
+- **字符串为空**: "MessagePack字符串不能为空"
 - **解析失败**: "MessagePack数据格式错误"
+- **序列化错误**: "MessagePack序列化失败"
 
 ## 项目结构
 
@@ -220,8 +242,8 @@ DecodeMessagePack/
 - **.NET 9.0** - 运行时框架
 - **ASP.NET Core** - Web API框架
 - **MessagePack** - MessagePack序列化库
-- **RC4加密** - 数据解密支持
 - **LZ4压缩** - MessagePack压缩支持
+- **多种解析器** - 支持多种MessagePack解析器
 - **Swagger/OpenAPI** - API文档生成
 - **System.Text.Json** - JSON序列化
 
