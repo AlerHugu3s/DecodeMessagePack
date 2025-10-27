@@ -13,6 +13,9 @@ builder.Services.AddSwaggerGen();
 // 添加Worker服务（可选，用于后台任务）
 builder.Services.AddHostedService<Worker>();
 
+// 添加TCP MessagePack服务
+builder.Services.AddHostedService<TcpMessagePackService>();
+
 var app = builder.Build();
 
 // 配置HTTP请求管道

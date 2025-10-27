@@ -95,6 +95,29 @@ public class MessagePackController : ControllerBase
             using var memoryStream = new MemoryStream();
             await Request.Body.CopyToAsync(memoryStream);
             var messagePackData = memoryStream.ToArray();
+            
+            var resolver = CompositeResolver.Create(
+                new IFormatterResolver[]
+                {
+                    // use generated resolver first, and combine many other generated/custom resolvers
+                    // GeneratedMessagePackResolver.Instance,
+                    StandardResolver.Instance,
+					
+                    // StandardResolver.Instance,
+
+                    MessagePack.Unity.UnityResolver.Instance,
+
+                    // finally, use builtin/primitive resolver(don't use StandardResolver, it includes dynamic generation)
+                    BuiltinResolver.Instance,
+                    AttributeFormatterResolver.Instance,
+                    PrimitiveObjectResolver.Instance,
+                }
+            );
+            var options = MessagePackSerializerOptions.Standard
+                .WithResolver(resolver)
+                .WithCompression(MessagePackCompression.Lz4Block);
+            // options.WithCompression(MessagePackCompression.None);
+            MessagePackSerializer.DefaultOptions = options;
 
             if (messagePackData == null || messagePackData.Length == 0)
             {

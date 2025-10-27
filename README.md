@@ -17,6 +17,7 @@
 - ✅ 支持通过文件上传解析MessagePack数据
 - ✅ 支持通过字节数组解析MessagePack数据
 - ✅ 支持通过字符串解析MessagePack数据
+- ✅ 支持TCP Socket服务（Node.js友好）
 - ✅ 输出格式化的JSON文本
 - ✅ 提供健康检查端点
 - ✅ 支持Swagger API文档（开发环境）
@@ -48,6 +49,18 @@
 ### 4. 健康检查
 - **URL**: `GET /health`
 - **返回**: 服务状态信息
+
+## TCP Socket服务
+
+### TCP服务端点
+- **地址**: `localhost:8888`
+- **协议**: TCP Socket
+- **数据格式**: 长度前缀 + MessagePack数据
+- **返回**: JSON格式的解析结果
+
+### 数据格式
+1. **发送**: 4字节长度 + MessagePack数据
+2. **接收**: 4字节长度 + JSON响应数据
 
 ## 运行服务
 
@@ -172,6 +185,37 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/messagepack/decode-from-string
 1. 打开浏览器访问 `http://localhost:5000/swagger`
 2. 在Swagger UI中测试API端点
 3. 上传MessagePack文件进行解析
+
+### 使用Node.js TCP客户端
+```javascript
+const MessagePackTcpClient = require('./nodejs-client');
+
+const client = new MessagePackTcpClient('localhost', 8888);
+
+// 从字符串解码
+const result = await client.decodeFromString("test messagepack data");
+console.log(result);
+
+// 从文件解码
+const fileResult = await client.decodeFromFile('data.msgpack');
+console.log(fileResult);
+
+// 从字节数组解码
+const bytes = Buffer.from("Hello MessagePack", 'utf8');
+const bytesResult = await client.decodeFromBytes(bytes);
+console.log(bytesResult);
+```
+
+### 运行Node.js测试
+```bash
+# 安装依赖（如果需要）
+npm install
+
+# 运行测试
+npm test
+# 或
+node nodejs-client.js
+```
 
 ## 返回格式
 
