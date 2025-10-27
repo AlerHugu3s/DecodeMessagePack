@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using MessagePack;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using DecodeMessagePack.Library;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
+using DecodeMessagePack.Utils;
 
 namespace DecodeMessagePack.Controllers;
 
@@ -61,11 +63,11 @@ public class MessagePackController : ControllerBase
             await file.CopyToAsync(memoryStream);
             var messagePackData = memoryStream.ToArray();
 
-            // 解析MessagePack数据
-            var jsonString = MessagePackSerializer.ConvertToJson(messagePackData);
-
             _logger.LogInformation("[Info] [{time}] MessagePack文件解析成功: {fileName}", DateTime.Now, file.FileName);
 
+            // 使用工具类安全地转换MessagePack为JSON
+            var jsonString = UnicodeEscapeHelper.ConvertMessagePackToSafeJson(messagePackData);
+            
             return Ok(new
             {
                 success = true,
@@ -126,8 +128,8 @@ public class MessagePackController : ControllerBase
 
             _logger.LogInformation("[Info] [{time}] 开始解析MessagePack字节数据，大小: {size} bytes", DateTime.Now, messagePackData.Length);
             
-            // 解析MessagePack数据
-            var jsonString = MessagePackSerializer.ConvertToJson(messagePackData);
+            // 使用工具类安全地转换MessagePack为JSON
+            var jsonString = UnicodeEscapeHelper.ConvertMessagePackToSafeJson(messagePackData);
             
             _logger.LogInformation("[Info] [{time}] MessagePack字节数据解析成功", DateTime.Now);
 

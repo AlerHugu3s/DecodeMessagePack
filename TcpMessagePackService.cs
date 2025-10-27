@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using MessagePack;
+using DecodeMessagePack.Utils;
 
 namespace DecodeMessagePack;
 
@@ -64,8 +65,8 @@ public class TcpMessagePackService(ILogger<TcpMessagePackService> logger) : Back
 
                 logger.LogInformation("[Info] [{time}] 接收到MessagePack数据，大小: {size} bytes", DateTime.Now, dataLength);
 
-                // 解析MessagePack数据
-                var jsonString = MessagePackSerializer.ConvertToJson(messagePackData);
+                // 使用工具类安全地转换MessagePack为JSON
+                var jsonString = UnicodeEscapeHelper.ConvertMessagePackToSafeJson(messagePackData);
 
                 // 创建响应
                 var response = new
