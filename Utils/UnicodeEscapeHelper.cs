@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DecodeMessagePack.Utils;
 
@@ -32,50 +34,30 @@ public static class UnicodeEscapeHelper
     /// <returns>安全的JSON字符串</returns>
     public static string ConvertMessagePackToSafeJson(byte[] messagePackData)
     {
-        try
-        {
-            // 首先尝试使用MessagePackSerializer.ConvertToJson
-            var jsonString = MessagePack.MessagePackSerializer.ConvertToJson(messagePackData);
-            
-            // 转义Unicode控制字符
-            return EscapeUnicodeControlCharacters(jsonString);
-        }
-        catch (Exception)
-        {
-            // 如果ConvertToJson失败，使用Deserialize + JsonSerializer的方式
-            try
-            {
+        // try
+        // {
+        //     // 使用MessagePackSerializer.ConvertToJson，这是最可靠的方法
+        //     var jsonString = MessagePack.MessagePackSerializer.ConvertToJson(messagePackData);
+        //     
+        //     // 转义Unicode控制字符
+        //     return EscapeUnicodeControlCharacters(jsonString);
+        // }
+        // catch (Exception ex)
+        // {
+        //     // 如果ConvertToJson失败，尝试使用Newtonsoft.Json作为备选方案
+        //     try
+        //     {
                 var jsonObject = MessagePack.MessagePackSerializer.Deserialize<object>(messagePackData);
-                var jsonOptions = new System.Text.Json.JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                };
                 
-                return System.Text.Json.JsonSerializer.Serialize(jsonObject, jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"无法解析MessagePack数据: {ex.Message}", ex);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 验证JSON字符串是否包含有效的Unicode字符
-    /// </summary>
-    /// <param name="jsonString">JSON字符串</param>
-    /// <returns>是否有效</returns>
-    public static bool IsValidJsonWithUnicode(string jsonString)
-    {
-        try
-        {
-            using var doc = System.Text.Json.JsonDocument.Parse(jsonString);
-            return true;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return false;
-        }
+                // 使用Newtonsoft.Json处理复杂对象
+                var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObject, Newtonsoft.Json.Formatting.Indented);
+                
+                // 转义Unicode控制字符
+                return EscapeUnicodeControlCharacters(jsonString);
+            // }
+            // catch (Exception innerEx)
+            // {
+            //     throw new InvalidOperationException($"无法解析MessagePack数据: {ex.Message}. 备选方案也失败: {innerEx.Message}", ex);
+            // }
     }
 }
