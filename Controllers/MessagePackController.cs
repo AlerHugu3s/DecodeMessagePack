@@ -137,7 +137,7 @@ public class MessagePackController : ControllerBase
             {
                 success = true,
                 dataSize = messagePackData.Length,
-                jsonData = jsonString
+                jsonData = jsonString,
             });
         }
         catch (Exception ex)
