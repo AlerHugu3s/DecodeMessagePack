@@ -93,6 +93,19 @@ public static class UnicodeEscapeHelper
                         }
                     }
                 }
+                else if (entry.Key is System.Collections.IList list)
+                {
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        var key = list[i];
+                        if (key is string strKey)
+                        {
+                            var cleanKey = CleanStringControlCharacters(strKey);
+                            cleanDict[cleanKey] = entry.Value;
+                            break;
+                        }
+                    }
+                }
                 else
                 {
                     var cleanKey = CleanStringControlCharacters(entry.Key?.ToString() ?? "");
@@ -142,7 +155,7 @@ public static class UnicodeEscapeHelper
             if (char.IsControl(c) && c != '\r' && c != '\n' && c != '\t')
             {
                 // 将控制字符替换为可见的十六进制表示
-                result.Append($"[\\u{(int)c:X4}]");
+                result.Append($"\\u{(int)c:X4}");
             }
             else
             {
