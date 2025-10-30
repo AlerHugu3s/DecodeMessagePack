@@ -87,8 +87,8 @@ public static class UnicodeEscapeHelper
                         var key = keyArray.GetValue(i);
                         if (key is string strKey)
                         {
-                            var cleanKey = CleanStringControlCharacters(strKey);
-                            cleanDict[cleanKey] = entry.Value;
+                            // var cleanKey = CleanStringControlCharacters(strKey);
+                            cleanDict[strKey] = entry.Value;
                             break;
                         }
                     }
@@ -100,16 +100,16 @@ public static class UnicodeEscapeHelper
                         var key = list[i];
                         if (key is string strKey)
                         {
-                            var cleanKey = CleanStringControlCharacters(strKey);
-                            cleanDict[cleanKey] = entry.Value;
+                            // var cleanKey = CleanStringControlCharacters(strKey);
+                            cleanDict[strKey] = entry.Value;
                             break;
                         }
                     }
                 }
                 else
                 {
-                    var cleanKey = CleanStringControlCharacters(entry.Key?.ToString() ?? "");
-                    cleanDict[cleanKey] = entry.Value;
+                    // var cleanKey = CleanStringControlCharacters(entry.Key?.ToString() ?? "");
+                    cleanDict[entry.Key?.ToString() ?? ""] = entry.Value;
                 }
             }
             return cleanDict;
@@ -155,7 +155,7 @@ public static class UnicodeEscapeHelper
             if (char.IsControl(c) && c != '\r' && c != '\n' && c != '\t')
             {
                 // 将控制字符替换为可见的十六进制表示
-                result.Append($"\\u{(int)c:X4}");
+                result.Append($"\\x{(int)c:X16}");
             }
             else
             {
